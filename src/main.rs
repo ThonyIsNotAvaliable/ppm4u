@@ -3,14 +3,10 @@ use bevy::{
     input::mouse::MouseWheel,
     prelude::*,
     reflect::List,
-    render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages},
+    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use bevy_egui::{EguiContexts, EguiPlugin, EguiPrimaryContextPass, egui};
 
-use bevy::{
-    a11y::AccessibilityNode, input::mouse::MouseScrollUnit, picking::hover::HoverMap,
-    winit::WinitSettings,
-};
 
 use std::fs;
 

@@ -16,8 +16,15 @@ use std::fs;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "ppm4u".to_string(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }))
         .insert_resource(Time::<Fixed>::from_hz(5.0))
+        .insert_resource(ZoomScale::default())
         .add_event::<UpdateImg>()
         .add_plugins(EguiPlugin::default())
         .insert_resource(FilePath::default())
@@ -31,7 +38,13 @@ fn main() {
 struct ImgComponent;
 
 #[derive(Resource)]
-struct ImgFile(PPMfile);
+struct ZoomScale(f32);
+
+impl Default for ZoomScale {
+    fn default() -> Self {
+        ZoomScale(1.0)
+    }
+}
 
 #[derive(Resource, Default)]
 struct FilePath(String);
@@ -158,15 +171,22 @@ fn update_img(
 fn zoom(
     mut mouse_wheel_events: EventReader<MouseWheel>,
     mut query: Query<(&ImgComponent, &mut Transform)>,
+    buttons: Res<ButtonInput<KeyCode>>,
+    mut scale: ResMut<ZoomScale>,
 ) {
+    let (_, mut img) = query.single_mut().expect("Cam does not exist");
     for event in mouse_wheel_events.read() {
-        println!(
-            "Mouse wheel event: x={}, y={}, unit={:?}",
-            event.x, event.y, event.unit
-        );
-        let (_, mut img) = query.single_mut().expect("Cam does not exist");
-
-        img.scale = img.scale + Vec3::ONE * (0.1 * event.y)
+        if buttons.pressed(KeyCode::ControlLeft) && !buttons.pressed(KeyCode::ShiftLeft) {
+            img.translation.x += event.y * 10.0;
+        } else if !buttons.pressed(KeyCode::ControlLeft) && buttons.pressed(KeyCode::ShiftLeft) {
+            img.translation.y += event.y * 10.0;
+        } else {
+            scale.0 = scale.0 + event.y * 0.05;
+            img.scale = Vec3::ONE * scale.0;
+        }
+    }
+    if buttons.just_pressed(KeyCode::KeyC) {
+        img.translation = Vec3::ZERO;
     }
 }
 
